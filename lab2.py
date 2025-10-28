@@ -19,6 +19,7 @@ data = DataLog('time_ms', 'x_mm', 'y_mm', 'heading_deg', name='path_log', timest
 x, y, heading = 0.0, 0.0, 0.0
 last_distance = 0.0
 
+#drive settings
 drive_speed = 100
 turn_rate = 50
 base_turn_hold = 100
