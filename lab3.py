@@ -18,43 +18,43 @@ max_r = 33     # reflection on table surface
 TARGET = (min_r + max_r) / 2       # midpoint between black and surface
 THRESH = (max_r - min_r) * 0.35   # tolerance
 
-DRIVE_SPEED = 70
-SEARCH_TURN_RATE = 35
-BASE_TURN_HOLD = 30
-TURN_HOLD_INCREASE = 15
-STOP_DISTANCE = 80  # mm for ultrasonic
+drive_speed = 70  # forward speed
+search_turn_rate = 35  # constant turning speed
+base_turn_hold = 30 # initial time per turn
+turn_hold_increase = 15 # how much of increase gonna be added to turn time
+stop_distance = 80  #  ultrasonic reaction distance
 
 
-lost_counter = 0
-turn_hold_time = BASE_TURN_HOLD
-search_direction = 1
+lost_counter = 0 # counter for how long robot has been off the line
+turn_hold_time = base_turn_hold  # current time to turn before switching
+search_direction = 1 # left or right
 
 
 while True:
-    distance = ultra.distance()
+    distance = ultra.distance() #ultrasonic distance
 
-    
-    if distance < STOP_DISTANCE:
-        robot.stop()
-        while ultra.distance() < STOP_DISTANCE:
+    # avoiding objects
+    if distance < stop_distance: 
+        robot.stop() 
+        while ultra.distance() < stop_distance: # wait until object is gone
             wait(100)
         continue
 
-    # --- Line following ---
+    # line following logic
     refl = sensor.reflection()
 
     if refl < TARGET - THRESH:
         # On black line
-        robot.drive(DRIVE_SPEED, 0)
-        lost_counter = 0
-        turn_hold_time = BASE_TURN_HOLD
+        robot.drive(drive_speed, 0)
+        lost_counter = 0  
+        turn_hold_time = base_turn_hold
     else:
-        # Off the line → zigzag search
+        # Off the line  zigzag search (moving in opposite directions after each turn)
         lost_counter += 1
-        if lost_counter >= turn_hold_time:
-            search_direction *= -1
+        if lost_counter >= turn_hold_time:  #if lost for too long, change direction
+            search_direction *= -1 # changing direction
             lost_counter = 0
-            turn_hold_time += TURN_HOLD_INCREASE
-        robot.drive(0, search_direction * SEARCH_TURN_RATE)
+            turn_hold_time += turn_hold_increase #incresing how long it turns next time
+        robot.drive(0, search_direction * search_turn_rate)
 
     wait(40)

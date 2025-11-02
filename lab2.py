@@ -21,16 +21,16 @@ last_distance = 0.0
 
 #drive settings
 drive_speed = 100
-turn_rate = 50
-base_turn_hold = 100
-turn_hold_increase = 50
+turn_rate = 50 # constant turning speed
+base_turn_hold = 100 # initial time per turn
+turn_hold_increase = 50  # how much longer each search lasts before switching
 
-search_direction = 1
-turn_hold_time = base_turn_hold
-lost_counter = 0
+search_direction = 1 # left or right
+turn_hold_time = base_turn_hold # current time to turn before switching
+lost_counter = 0 # counter for how long robot has been off the line
 found_once = False
 
-loop_counter = 0
+loop_counter = 0 # loop counter for logging
 
 while True:
     color = sensor.color()
@@ -51,15 +51,15 @@ while True:
 
     
     loop_counter += 1
-    if loop_counter % 5 == 0:  
-        distance = robot.distance()
-        delta_d = distance - last_distance
-        last_distance = distance
+    if loop_counter % 5 == 0:  # logging every 5th loop
+        distance = robot.distance() # get distance traveled since last call
+        delta_d = distance - last_distance # change in distance
+        last_distance = distance # updating last distance
 
-        heading = robot.angle()
-        rad = math.radians(heading)
-        x += delta_d * math.cos(rad)
-        y += delta_d * math.sin(rad)
+        heading = robot.angle() # current heading
+        rad = math.radians(heading) # converting heading to radians
+        x += delta_d * math.cos(rad) #  x position
+        y += delta_d * math.sin(rad) #  y position
 
         data.log(watch.time(), x, y, heading)
 
