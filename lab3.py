@@ -1,71 +1,60 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.hubs import EV3Brick
-from pybricks.ev3devices import Motor, ColorSensor
-from pybricks.parameters import Port, Color
+from pybricks.ev3devices import Motor, ColorSensor, UltrasonicSensor
+from pybricks.parameters import Port
 from pybricks.robotics import DriveBase
 from pybricks.tools import wait
 
 ev3 = EV3Brick()
-left_motor = Motor(Port.B)
-right_motor = Motor(Port.C)
+left = Motor(Port.B)
+right = Motor(Port.C)
 sensor = ColorSensor(Port.S1)
-robot = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=114)
+ultra = UltrasonicSensor(Port.S2)
+robot = DriveBase(left, right, wheel_diameter=56, axle_track=114)
 
-# --- Movement parameters ---
-drive_speed = 100
-turn_rate = 30            # slower turn for tighter track
-base_turn_hold = 80
-turn_hold_increase = 30   # smaller increment per lost search
+min_r = 5      # average reflection on black line
+max_r = 33     # reflection on table surface
 
-# --- State variables ---
-search_direction = 1
-turn_hold_time = base_turn_hold
+TARGET = (min_r + max_r) / 2       # midpoint between black and surface
+THRESH = (max_r - min_r) * 0.35   # tolerance
+
+DRIVE_SPEED = 70
+SEARCH_TURN_RATE = 35
+BASE_TURN_HOLD = 30
+TURN_HOLD_INCREASE = 15
+STOP_DISTANCE = 80  # mm for ultrasonic
+
+
 lost_counter = 0
-found_once = False
+turn_hold_time = BASE_TURN_HOLD
+search_direction = 1
 
-# --- Smart path memory ---
-path_stack = []           # stores 'F', 'L', 'R' moves
-recent_directions = []    # prevents flipping back and forth endlessly
 
 while True:
-    color = sensor.color()
+    distance = ultra.distance()
 
-    if color == Color.BLACK:
-        # --- Follow line ---
-        robot.drive(drive_speed, 0)
+    
+    if distance < STOP_DISTANCE:
+        robot.stop()
+        while ultra.distance() < STOP_DISTANCE:
+            wait(100)
+        continue
+
+    # --- Line following ---
+    refl = sensor.reflection()
+
+    if refl < TARGET - THRESH:
+        # On black line
+        robot.drive(DRIVE_SPEED, 0)
         lost_counter = 0
-        turn_hold_time = base_turn_hold
-        found_once = True
-
-        # Record forward movement if last move wasn't 'F'
-        if not path_stack or path_stack[-1] != 'F':
-            path_stack.append('F')
-
+        turn_hold_time = BASE_TURN_HOLD
     else:
-        # --- Line lost ---
+        # Off the line → zigzag search
         lost_counter += 1
-
         if lost_counter >= turn_hold_time:
-            # Dead end / search timeout reached
-            lost_counter = 0
-            turn_hold_time += turn_hold_increase
-
-            # Backtrack if we have moves
-            if path_stack:
-                last_move = path_stack.pop()
-                robot.drive(-50, 0)  # reverse a bit
-                wait(300)
-
-            # Flip search direction, avoid repeating recent directions
             search_direction *= -1
-            recent_directions.append(search_direction)
-            if len(recent_directions) > 4:
-                recent_directions.pop(0)
-            # Avoid flipping to a recent direction
-            if recent_directions.count(search_direction) > 1:
-                search_direction *= -1
+            lost_counter = 0
+            turn_hold_time += TURN_HOLD_INCREASE
+        robot.drive(0, search_direction * SEARCH_TURN_RATE)
 
-        # Rotate in place searching for line
-        robot.drive(0, search_direction * turn_rate)
-
-    wait(10)
+    wait(40)

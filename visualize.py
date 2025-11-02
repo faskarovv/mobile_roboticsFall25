@@ -13,7 +13,7 @@ time = df['time_ms']
 
 # Plot XY path
 plt.figure(figsize=(8,6))
-plt.plot(x, y, marker='.', linestyle='-', color='blue')
+plt.plot(x, y, marker='.', linestyle='-', color='green')
 plt.title('Robot Path')
 plt.xlabel('X position (mm)')
 plt.ylabel('Y position (mm)')

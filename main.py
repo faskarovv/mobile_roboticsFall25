@@ -41,7 +41,7 @@ while True:
         if lost_counter >= turn_hold_time:
             search_direction *= -1
             lost_counter = 0
-            turn_hold_time += turn_hold_increase 
+            turn_hold_time += turn_hold_increase  # increase how long it turns next time
 
 
         robot.drive(0, search_direction * turn_rate)
